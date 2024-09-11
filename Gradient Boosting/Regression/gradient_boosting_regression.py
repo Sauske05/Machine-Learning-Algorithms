@@ -10,6 +10,7 @@ import seaborn as sns
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
+import shap
 df = pd.read_csv('./affairs.csv')
 df.drop(columns = ['Unnamed: 0'], inplace = True)
 print(df.info())
@@ -64,13 +65,15 @@ def initial_model():
     percentage_error = ((mae)/(y_test.max() - y_test.min())) * 100
     print(f'Percentage error of the model is {percentage_error} %')
     
+    #return X_train, X_test, y_train, y_test, regr
+    
 initial_model()
 
 '''
 Training the model via feature selection based on correlation matrix
 '''
 def selected_feature_model():
-    input_features = affair_correlation[(affair_correlation.values > 0.1) | 
+    input_features = affair_correlation[(affair_correlation.values > 0.1) |
                                         (affair_correlation.values < -0.1)].index
     input_features = list(input_features)[:-1]
     output_features = 'affairs'
@@ -84,12 +87,40 @@ def selected_feature_model():
     print(f'The mean absolute error of the second model is {mae}')
     percentage_error = ((mae)/(y_test.max() - y_test.min())) * 100
     print(f'Percentage error of the second model is {percentage_error} %')
+    return X_train, X_test, y_train, y_test, regr, y_pred
+X_train, X_test, y_train, y_test, model, y_pred = selected_feature_model()
 
-selected_feature_model()
-
-def decision_boundary_plot():
-    pass
+'''
+def line_plot():
+    plt.figure(figsize=(12,12))
+    ax = plt.figure().add_subplot(projection = '3d')
+    X = X_test['rate_marriage']
+    Y = X_test['religious']
+    Z = y_pred
+    z1 = y_test
     
+    #ax.plot(X,Y,Z, label = 'Model Function')
+    ax.scatter(X,Y, z1)
+    ax.legend()
+    ax.set_xlabel('Rate Marriage')
+    ax.set_ylabel('Religious')
+    ax.set_zlabel('Prediction')
+    plt.show()
+    
+line_plot()
+'''   
+
+'''
+explainer = shap.Explainer(model)
+shap_values = explainer(X_test)
+
+# Plot the global importance of features
+shap.summary_plot(shap_values, X_test)
+
+# Plot dependence of one feature (e.g., feature 0)
+shap.dependence_plot(0, shap_values.values, X_test)
+print(shap_values)'''
+
     
     
         
